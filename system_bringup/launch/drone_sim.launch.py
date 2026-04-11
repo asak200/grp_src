@@ -26,6 +26,9 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(
                 os.path.join(this_pkg_share, 'launch', 'px4_drone_controller.launch.py')
             ),
+            launch_arguments={
+                'ssmr_spawner': 'false'
+            }.items()
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(

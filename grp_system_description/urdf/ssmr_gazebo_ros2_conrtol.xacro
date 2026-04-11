@@ -3,8 +3,8 @@
 
     <xacro:macro name="create_joint_tag_ros2_cont" params="prefix">
         <joint name="${prefix}">
-            <command_interface name="effort">
-            <!-- <command_interface name="velocity"> -->
+            <!-- <command_interface name="effort"> -->
+            <command_interface name="velocity">
                 <param name="max">100</param>
                 <param name="min">-100</param>
             </command_interface>

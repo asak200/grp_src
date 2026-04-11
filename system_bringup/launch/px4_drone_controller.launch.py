@@ -5,8 +5,21 @@ from launch_ros.actions import Node
 from launch.actions import ExecuteProcess, TimerAction
 from ament_index_python.packages import get_package_share_directory
 
+from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition, UnlessCondition
+
+
 def generate_launch_description():
     ld = LaunchDescription()
+
+    ssmr_spawner_arg = DeclareLaunchArgument(
+        'ssmr_spawner',
+        default_value='false',
+        description='Spawn the ssmr in gazebo'
+    )
+
+    ssmr_spawner = LaunchConfiguration('ssmr_spawner')
 
     # Path to your bash script
     pkg_share = get_package_share_directory('system_bringup')
@@ -46,6 +59,7 @@ def generate_launch_description():
         ],
         output='screen',
         # namespace='ssmr',
+        condition=IfCondition(ssmr_spawner)
     )
 
     delayed_nodes = TimerAction(
@@ -57,6 +71,8 @@ def generate_launch_description():
         ]
     )
 
+
+    ld.add_action(ssmr_spawner_arg)
     ld.add_action(start_px4)
     ld.add_action(MicroXRCEAgent)
     ld.add_action(delayed_nodes)

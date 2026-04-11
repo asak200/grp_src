@@ -8,6 +8,9 @@ from launch.substitutions import Command, LaunchConfiguration, ThisLaunchFileDir
 from launch_ros.parameter_descriptions import ParameterValue
 from ament_index_python.packages import get_package_share_directory
 
+from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition, UnlessCondition
+
 # node graph
 
 # actual againg reference
@@ -27,6 +30,14 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     ld = LaunchDescription()
+
+    drone_arg = DeclareLaunchArgument(
+        'drone',
+        default_value='false',
+        description='Run drone (PX4) instead of SSMR'
+    )
+
+    drone = LaunchConfiguration('drone')
 
     this_pkg_share = get_package_share_directory('system_bringup')
     pkg_share = get_package_share_directory('grp_system_description')
@@ -71,6 +82,7 @@ def generate_launch_description():
         ],
         output='screen',
         # namespace='ssmr',
+        condition=UnlessCondition(drone),
     )
 
     # ---------------- Apply Torque From Voltage ----------------
@@ -114,18 +126,23 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(
                 os.path.join(this_pkg_share, 'launch', 'px4_drone_controller.launch.py')
             ),
+            launch_arguments={
+                'ssmr_spawner': 'true'
+            }.items()
         )
-        ]
+        ],
+        condition=IfCondition(drone)
     )
 
 
+    ld.add_action(drone_arg)
     ld.add_action(robot_state_publisher)
     ld.add_action(gazebo)
-    # ld.add_action(ssmr_spawner)
+    ld.add_action(ssmr_spawner)
     # ld.add_action(apply_torque_node)
     ld.add_action(publish_states_to_matlab_node)
-    ld.add_action(wheel_effort_cont_spawner)
-    # ld.add_action(diff_cont_spawner)
+    # ld.add_action(wheel_effort_cont_spawner)
+    ld.add_action(diff_cont_spawner)
     ld.add_action(joint_broad_spawner)
     ld.add_action(delayed_px4_launcher)
 
