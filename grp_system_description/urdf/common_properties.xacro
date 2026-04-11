@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:property name="chassis_length" value="0.5"/>
+    <xacro:property name="chassis_width"  value="0.3"/>
+    <xacro:property name="chassis_height" value="0.2"/>
+    <xacro:property name="chassis_mass"   value="6.0"/>
+
+    <xacro:property name="wheel_radius"   value="0.05"/>
+    <xacro:property name="wheel_width"    value="0.05"/>
+    <xacro:property name="wheel_mass"     value="0.5"/>
+
+    <xacro:property name="wheel_x_offset" value="${chassis_length/2 - 0.1}"/> 
+    <xacro:property name="wheel_y_offset" value="${chassis_width/2 + wheel_width/2}"/>
+    <xacro:property name="wheel_z_offset" value="${-chassis_height/2}"/>
+    
+</robot>

@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:macro name="create_joint_tag_ros2_cont" params="prefix">
+        <joint name="${prefix}">
+            <command_interface name="effort">
+            <!-- <command_interface name="velocity"> -->
+                <param name="max">100</param>
+                <param name="min">-100</param>
+            </command_interface>
+            <state_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="effort"/>
+            <param name="max_effort">100</param>
+        </joint>
+    </xacro:macro>
+
+    <ros2_control name="GazedoSys" type="system">
+        <hardware>
+            <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+        </hardware>
+
+        <xacro:create_joint_tag_ros2_cont prefix="front_left_wheel_joint" />
+        <xacro:create_joint_tag_ros2_cont prefix="front_right_wheel_joint" />
+        <xacro:create_joint_tag_ros2_cont prefix="rear_left_wheel_joint" />
+        <xacro:create_joint_tag_ros2_cont prefix="rear_right_wheel_joint" />
+    </ros2_control>
+    
+
+    <gazebo>
+        <plugin name="gazebo_ros2_cont" filename="libgazebo_ros2_control.so">
+            <!-- <robot_param_node>/ssmr/robot_state_publisher</robot_param_node> -->
+            <parameters>$(find grp_system_description)/config/ssmr_controllers.yaml</parameters>
+        </plugin>
+    </gazebo>
+
+</robot>
