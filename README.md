@@ -21,3 +21,7 @@ To control the SSMR's velocity:
 3. Run the SSMR and the Drone:
 
 `ros2 launch system_bringup ssmr_sim.launch.py drone:=true`
+
+### To run the segmentation & path planning model:
+
+`ros2 run perception_pkg vision_Nav`

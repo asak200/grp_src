@@ -30,7 +30,7 @@ source $PX4_DIR/Tools/simulation/gazebo-classic/setup_gazebo.bash \
 
 
 ############ REQUIRED PX4 VARIABLES
-export PX4_SIM_MODEL=gazebo-classic_$MODEL
+export PX4_SIM_MODEL=gazebo-classic_iris
 export PX4_SIM_WORLD=$WORLD
 
 # Optional but recommended

@@ -39,7 +39,7 @@ class PathGenerator(Node):
         )
 
         self.timer_path = self.create_timer(
-            5,
+            1,
             self.timer_path_callback
         )
         # self.timer = self.create_timer(
@@ -145,26 +145,6 @@ class PathGenerator(Node):
 
     def timer_path_callback(self):
         self.path_pub.publish(self.path)
-
-    # def timer_callback(self):
-    #     if not self.client.wait_for_service(timeout_sec=0.1):
-    #         self.get_logger().warn('Waiting for /gazebo/get_entity_state')
-    #         return
-
-    #     request = GetEntityState.Request()
-    #     request.name = self.get_parameter('entity_name').value
-    #     request.reference_frame = 'world'
-
-    #     future = self.client.call_async(request)
-    #     future.add_done_callback(self.handle_response)
-
-    # def handle_response(self, future):
-    #     if future.result() is None:
-    #         self.get_logger().warn('Service call failed')
-    #         return
-
-    #     self.pose: Pose = future.result().state.pose
-    #     # self.publish_waypoint(pose)
 
     def read_pose(self, msg: Pose):
         self.pose = msg

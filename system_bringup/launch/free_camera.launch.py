@@ -48,7 +48,7 @@ def generate_launch_description():
         arguments=[
             '-entity', 'free_camera',
             '-topic', 'robot_description',
-            '-x', '0', '-y', '0', '-z', '0.0', '-P', '1.57'
+            '-x', '8', '-y', '4', '-z', '0.0', '-P', '1.57'
         ],
         output='screen'
     )

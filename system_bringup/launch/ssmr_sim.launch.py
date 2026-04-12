@@ -141,8 +141,8 @@ def generate_launch_description():
     ld.add_action(ssmr_spawner)
     # ld.add_action(apply_torque_node)
     ld.add_action(publish_states_to_matlab_node)
-    # ld.add_action(wheel_effort_cont_spawner)
-    ld.add_action(diff_cont_spawner)
+    ld.add_action(wheel_effort_cont_spawner)
+    # ld.add_action(diff_cont_spawner)
     ld.add_action(joint_broad_spawner)
     ld.add_action(delayed_px4_launcher)
 

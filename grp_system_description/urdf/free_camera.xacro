@@ -28,7 +28,7 @@
 
   <!-- ================= GAZEBO CAMERA SENSOR ================= -->
   <gazebo reference="free_camera_link">
-    <material>Gazebo/Yellow</material>
+    <material>Gazebo/Red</material>
     <!-- <gravity>0</gravity> -->
     <static>false</static>
     <!-- <sensor type="camera" name="camera_sensor">
