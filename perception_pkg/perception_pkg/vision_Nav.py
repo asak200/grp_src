@@ -169,7 +169,7 @@ class UGVVisionNavigator(Node):
             
             # 7. Convert Path to Metric 3D using Teammate's Math
             path_msg = Path()
-            path_msg.header.frame_id = "drone_camera_link"
+            path_msg.header.frame_id = "camera_link"
             path_msg.header.stamp = self.get_clock().now().to_msg()
 
             for pt in smooth_path_224:
