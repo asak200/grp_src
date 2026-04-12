@@ -40,8 +40,8 @@ class MyNode(Node):
         self.start_time = time.time()
         
         self.x_ref: float = 0.
-        self.y_ref: float = 0.
-        self.z_ref: float = -7.
+        self.y_ref: float = -1.
+        self.z_ref: float = -10.
         self.yaw_ref: float = 90.
         self.vx_ref: float = 0.
         self.vy_ref: float = 0.
