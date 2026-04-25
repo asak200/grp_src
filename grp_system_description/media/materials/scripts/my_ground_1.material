@@ -1,0 +1,14 @@
+material GroundPic/Texture_1
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture ground_2.jpg
+        scale 1 1
+      }
+    }
+  }
+}

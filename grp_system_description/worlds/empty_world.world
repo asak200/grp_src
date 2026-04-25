@@ -58,13 +58,17 @@
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>100 100</size>
+              <size>30 20</size> 
             </plane>
           </geometry>
           <material>
-            <script>
+            <!-- <script>
               <uri>file://media/materials/scripts/gazebo.material</uri>
-              <name>Gazebo/Gray</name>
+              <name>Gazebo/Green</name>
+            </script> -->
+            <script>
+              <uri>file://media/materials/scripts/my_ground.material</uri>
+              <name>GroundPic/Texture_1</name>
             </script>
           </material>
         </visual>

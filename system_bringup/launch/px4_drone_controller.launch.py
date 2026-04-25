@@ -27,7 +27,7 @@ def generate_launch_description():
 
     # Start PX4
     start_px4 = ExecuteProcess(
-        cmd=['bash', px4_script, 'iris_camera', '1'],  # add the arguments here
+        cmd=['bash', px4_script, 'iris_camera', '0', '0'],  # add the arguments here
         output='screen'
     )
     MicroXRCEAgent = ExecuteProcess(
@@ -54,7 +54,7 @@ def generate_launch_description():
         arguments=[
             '-entity', 'ssmr',
             '-topic', 'robot_description',
-            # '-x', '0', '-y', '0', '-z', '1.0',
+            '-x', '0', '-y', '-75', '-z', '1.0',
             # '-R', '3.14',
         ],
         output='screen',
