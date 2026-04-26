@@ -54,8 +54,8 @@ def generate_launch_description():
         arguments=[
             '-entity', 'ssmr',
             '-topic', 'robot_description',
-            '-x', '0', '-y', '-75', '-z', '1.0',
-            # '-R', '3.14',
+            '-x', '-4', '-y', '-6', '-z', '1.0',
+            '-Y', '1.8',
         ],
         output='screen',
         # namespace='ssmr',

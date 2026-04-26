@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 
 import math
+import numpy as np
+
+# Fix for old transforms3d with NumPy >= 1.24 / 1.26
+if not hasattr(np, "float"):
+    np.float = float
 
 import rclpy
 from rclpy.node import Node
@@ -27,7 +32,7 @@ class PathGenerator(Node):
 
         self.path_pub = self.create_publisher(
             Path,
-            'generated_path',
+            'refined_path',
             10
         )
 

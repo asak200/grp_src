@@ -21,6 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
         'vision_Nav = perception_pkg.vision_Nav:main',
+        'choose_path = perception_pkg.choose_path:main',
+        'vfg_navi = perception_pkg.vfg_navi:main',
         ],
     },
 )

@@ -45,7 +45,7 @@ def generate_launch_description():
     gazebo_pkg = get_package_share_directory('gazebo_ros')
     world = "/media/asak/ssd/PX4-Autopilot/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/sonoma_raceway.world"
     # world = "/media/asak/ssd/PX4-Autopilot/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/baylands.world"
-    world = os.path.join(pkg_share, 'worlds', 'my_world.world')
+    world = os.path.join(pkg_share, 'worlds', 'my_world_2.world')
     # world = '/home/asak/grp/src/grp_system_description/worlds/small_city.world'
 
     ssmr_robot_description = ParameterValue(Command(['xacro ', urdf_path]), value_type=str)
@@ -77,8 +77,8 @@ def generate_launch_description():
         arguments=[
             '-entity', 'ssmr',
             '-topic', 'robot_description',
-            '-x', '-10', '-y', '-8', '-z', '1.0',
-            # '-R', '3.14',
+            '-x', '-4', '-y', '-6', '-z', '1.0',
+            '-Y', '1.8',
         ],
         output='screen',
         # namespace='ssmr',
@@ -141,8 +141,8 @@ def generate_launch_description():
     ld.add_action(ssmr_spawner)
     # ld.add_action(apply_torque_node)
     ld.add_action(publish_states_to_matlab_node)
-    # ld.add_action(wheel_effort_cont_spawner)
-    ld.add_action(diff_cont_spawner)
+    ld.add_action(wheel_effort_cont_spawner)
+    # ld.add_action(diff_cont_spawner)
     ld.add_action(joint_broad_spawner)
     ld.add_action(delayed_px4_launcher)
 

@@ -47,8 +47,8 @@ public:
 
 
 		offboard_setpoint_counter_ = 0;
-		this->trajectory_msg.position = {0.0, -1.0, -10.0};
-		this->trajectory_msg.yaw = 1.57; // [-PI:PI]
+		this->trajectory_msg.position = {0.0, -0.0, -15.0};
+		this->trajectory_msg.yaw = 0; // [-PI:PI]
 
 		this->offboard_msg.position = true;
 		this->offboard_msg.velocity = false;

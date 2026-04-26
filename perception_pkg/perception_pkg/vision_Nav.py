@@ -15,7 +15,7 @@ from geometry_msgs.msg import PoseStamped
 
 # Deep Learning & Math
 import tensorflow as tf
-from tensorflow.keras.models import load_model 
+from tensorflow.keras.models import load_model
 from scipy.interpolate import splprep, splev
 from scipy.ndimage import binary_dilation, binary_opening
 
@@ -29,7 +29,7 @@ class UGVVisionNavigator(Node):
 
         # --- TUNING PARAMETERS ---
         self.input_shape = (224, 224)
-        self.safety_margin = 0     # Pixel inflation radius for 224x224 map
+        self.safety_margin = 5     # Pixel inflation radius for 224x224 map
         self.rrt_step_size = 15
         self.rrt_max_iter = 5000
         
@@ -38,7 +38,7 @@ class UGVVisionNavigator(Node):
         self.fy = 673.364213244571
         self.cx = 640.5
         self.cy = 360.5
-        self.Z = 10.0  
+        self.Z = 15.0  
         
         # --- ROS2 SETUP ---
         self.bridge = CvBridge()
@@ -149,14 +149,29 @@ class UGVVisionNavigator(Node):
         prediction = self.model.predict(img_tensor, verbose=0)
         pred_mask = np.argmax(prediction, axis=-1)[0]
 
-        # 4. Create Safety Map
+         # 4. Create Safety Map
         traversable_map = np.zeros_like(pred_mask)
         traversable_map[pred_mask == 2] = 1 # High Veg
         traversable_map[pred_mask == 3] = 1 # Trees
         traversable_map[pred_mask == 4] = 1 # Obstacles
 
+        # Fix the np.zeros to np.ones here!
         clean_map = binary_opening(traversable_map, structure=np.ones((3,3))).astype(np.int32)
         nav_map = binary_dilation(clean_map, iterations=self.safety_margin).astype(np.int32)
+
+        # =========================================================================
+        # --- NEW: FORCE START AND GOAL TO BE TRAVERSABLE ---
+        # Clears a radius around the UGV and Target to ensure the planner can move.
+        # This overrides the neural network segmentation in these specific spots.
+        # =========================================================================
+        clearance_radius = 20  # Adjust this if the robot footprint is larger in the 224x224 grid
+        
+        # Clear UGV area (start_node is row, col -> cv2 uses x, y so we pass col, row)
+        cv2.circle(nav_map, (start_node[1], start_node[0]), clearance_radius, 0, -1)
+        
+        # Clear Target area
+        cv2.circle(nav_map, (goal_node[1], goal_node[0]), clearance_radius, 0, -1)
+        # =========================================================================
 
         # --- VISUALIZATION: Create an RGB version of the navigation map ---
         viz_map = (nav_map * 255).astype(np.uint8)

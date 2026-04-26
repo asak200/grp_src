@@ -84,7 +84,7 @@
     </gazebo>
 
     <!-- Aruco marker -->
-    <link name="robot_picture">
+    <!-- <link name="robot_picture">
         <visual>
             <geometry>
                 <box size="0.3 0.3 0.01"/>
@@ -99,7 +99,7 @@
         <parent link="base_link"/>
         <child link="robot_picture"/>
         <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
-    </joint>
+    </joint> -->
 
     <xacro:wheel prefix="front_left"  x_reflect="1"  y_reflect="1"/>
     <xacro:wheel prefix="front_right" x_reflect="1"  y_reflect="-1"/>
