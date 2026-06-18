@@ -2,3 +2,4 @@
 perception_pkg/perception_pkg/best_model.keras
 perception_pkg/perception_pkg/best_model.h5
 
+*.h5
