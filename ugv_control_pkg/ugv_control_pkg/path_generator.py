@@ -23,7 +23,11 @@ class PathGenerator(Node):
         super().__init__('path_generator')
 
         self.declare_parameter('entity_name', 'ssmr')
-        self.declare_parameter('resolution', 0.01)    # meters
+        self.declare_parameter('resolution', 0.05)    # meters
+        self.declare_parameter('test_path', 0)
+
+        print(self.get_parameter("test_path").value)
+        print(type(self.get_parameter("test_path").value))
 
         self.client = self.create_client(
             GetEntityState,
@@ -32,7 +36,7 @@ class PathGenerator(Node):
 
         self.path_pub = self.create_publisher(
             Path,
-            'refined_path',
+            '/refined_path',
             10
         )
 
@@ -40,6 +44,13 @@ class PathGenerator(Node):
             Pose,
             'ssmr_position_states_for_matlab',
             self.read_pose,
+            10
+        )
+
+        self.path_sub = self.create_subscription(
+            Path,
+            '/refined_path',
+            self.path_callback,
             10
         )
 
@@ -143,22 +154,32 @@ class PathGenerator(Node):
 
             return path_msg
         
-        self.path: Path = precomputed_path_msg(ds=self.get_parameter('resolution').value)
+        if self.get_parameter("test_path").value:
+            self.path: Path = precomputed_path_msg(ds=self.get_parameter('resolution').value)
+            self.get_logger().info(f'pose len: {len(self.path.poses)}')
+        else:
+            self.path: Path = None
         self.pose = Pose()
-        self.get_logger().info(f'pose len: {len(self.path.poses)}')
         self.get_logger().info('Path generator node started')
 
     def timer_path_callback(self):
-        self.path_pub.publish(self.path)
+        if self.get_parameter("test_path").value:
+            self.path_pub.publish(self.path)
+
+    def path_callback(self, msg: Path):
+        print("asak")
+        self.path = msg
+        self.get_logger().info("path updated")
 
     def read_pose(self, msg: Pose):
         self.pose = msg
+
     def publish_waypoint(self):
         """
         Tracks robot position and publishes the next waypoint along the path.
         """
 
-        if not self.path.poses:
+        if not self.path or not self.path.poses:
             return
 
         # Current robot position
@@ -171,16 +192,16 @@ class PathGenerator(Node):
         min_dist = float('inf')
         closest_idx = self.current_wp_idx
 
+        path_lenght = len(self.path.poses)
         for i in range(self.current_wp_idx, self.current_wp_idx + 200):
-            if i >= len(self.path.poses):
-                break
-            px = self.path.poses[i].pose.position.x
-            py = self.path.poses[i].pose.position.y
+            idx = min(i, path_lenght-1)
+            px = self.path.poses[idx].pose.position.x
+            py = self.path.poses[idx].pose.position.y
 
             d = math.hypot(px - rx, py - ry)
             if d < min_dist:
                 min_dist = d
-                closest_idx = i
+                closest_idx = idx
 
         self.current_wp_idx = closest_idx
 
@@ -198,9 +219,13 @@ class PathGenerator(Node):
         # 3) Publish waypoint
         # -----------------------
         wp: Pose = self.path.poses[self.current_wp_idx].pose
+        # wp.position.x -= 4
+        # wp.position.y -= 6
+
+        # wp.orientation.w = float(self.current_wp_idx)
 
         self.waypoint_pub.publish(wp)
-        self.get_logger().info(f"\npose len: {len(self.path.poses)}\nwp num: {self.current_wp_idx}\nwp: {wp.position.x}\nwp: {wp.position.y}\nwp: {wp.position.z}\nwp: {wp.orientation.x}\nwp: {wp.orientation.y}\nwp: {wp.orientation.z}\nwp: {wp.orientation.w}\npose:\nx: {self.pose.position.x}\ny: {self.pose.position.y}\nw: {self.pose.orientation.w}\n")
+        # self.get_logger().info(f"\npose len: {len(self.path.poses)}\nwp num: {self.current_wp_idx}\nwp x: {wp.position.x}\nwp y: {wp.position.y}\nwp z: {wp.position.z}\nwp: {wp.orientation.x}\nwp: {wp.orientation.y}\nwp: {wp.orientation.z}\nwp: {wp.orientation.w}\npose:\nx: {self.pose.position.x}\ny: {self.pose.position.y}\n")
         # self.get_logger().info(f"\n")
 
 

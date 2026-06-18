@@ -36,8 +36,22 @@ def generate_launch_description():
         default_value='false',
         description='Run drone (PX4) instead of SSMR'
     )
+    diff_cont_arg = DeclareLaunchArgument(
+        'diff',
+        default_value='false',
+        description='Run the diffdrive controller'
+    )
+    kanayama_arg = DeclareLaunchArgument(
+        'is_kanayama',
+        default_value='false',
+        description='Run the diffdrive controller'
+    )
 
     drone = LaunchConfiguration('drone')
+    diff_cont = LaunchConfiguration('diff')
+    is_kanayama = LaunchConfiguration('is_kanayama')
+
+    
 
     this_pkg_share = get_package_share_directory('system_bringup')
     pkg_share = get_package_share_directory('grp_system_description')
@@ -48,7 +62,8 @@ def generate_launch_description():
     world = os.path.join(pkg_share, 'worlds', 'my_world_2.world')
     # world = '/home/asak/grp/src/grp_system_description/worlds/small_city.world'
 
-    ssmr_robot_description = ParameterValue(Command(['xacro ', urdf_path]), value_type=str)
+    ssmr_robot_description = ParameterValue(Command(['xacro ', urdf_path, ' real_sys:=', 'false', ' is_diff:=', diff_cont]), value_type=str)
+    # print("asak")
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -77,18 +92,26 @@ def generate_launch_description():
         arguments=[
             '-entity', 'ssmr',
             '-topic', 'robot_description',
-            '-x', '-4', '-y', '-6', '-z', '1.0',
-            '-Y', '1.8',
+            # '-x', '-4', '-y', '-6', '-z', '1.0',
+            # '-Y', '1.8',
         ],
         output='screen',
         # namespace='ssmr',
         condition=UnlessCondition(drone),
     )
 
-    # ---------------- Apply Torque From Voltage ----------------
-    apply_torque_node = Node(
+    # ---------------- Path Generator (For Kanayama) ----------------
+    path_generator_node = Node(
         package='ugv_control_pkg',
-        executable='apply_torque_from_voltage',
+        executable='path_generator',
+        parameters=[{'test_path': 1}],
+        output='screen',
+        condition=IfCondition(is_kanayama),
+    )
+
+    choose_path_node = Node(
+        package='perception_pkg',
+        executable='choose_path',
         output='screen',
     )
 
@@ -105,11 +128,13 @@ def generate_launch_description():
         package='controller_manager',
         executable='spawner',
         arguments=['wheel_effort_cont'],
+        condition=UnlessCondition(diff_cont),
     )
     diff_cont_spawner = Node(
         package='controller_manager',
         executable='spawner',
         arguments=['diff_cont'],
+        condition=IfCondition(diff_cont),
     )
     joint_broad_spawner = Node(
         package='controller_manager',
@@ -134,15 +159,18 @@ def generate_launch_description():
         condition=IfCondition(drone)
     )
 
-
     ld.add_action(drone_arg)
+    ld.add_action(diff_cont_arg)
+    ld.add_action(kanayama_arg)
+
     ld.add_action(robot_state_publisher)
     ld.add_action(gazebo)
     ld.add_action(ssmr_spawner)
-    # ld.add_action(apply_torque_node)
+    ld.add_action(path_generator_node)
+    ld.add_action(choose_path_node)
     ld.add_action(publish_states_to_matlab_node)
     ld.add_action(wheel_effort_cont_spawner)
-    # ld.add_action(diff_cont_spawner)
+    ld.add_action(diff_cont_spawner)
     ld.add_action(joint_broad_spawner)
     ld.add_action(delayed_px4_launcher)
 

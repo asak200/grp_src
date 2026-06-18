@@ -1,0 +1,10 @@
+<library path="hw_interface_ssmr">
+    <class
+        name="hw_interface_ssmr/SSMR_HWInterface"
+        type="hw_interface_ssmr::SSMR_HWInterface"
+        base_class_type="hardware_interface::SystemInterface">
+        <description>
+            Hardware Interface for the SSMR robot handling PWM commands and reading encoders.
+        </description>
+    </class>
+</library>

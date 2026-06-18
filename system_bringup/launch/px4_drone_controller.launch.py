@@ -62,12 +62,17 @@ def generate_launch_description():
         condition=IfCondition(ssmr_spawner)
     )
 
+    delayed_robot_spawner = TimerAction(
+        period=0.0,
+        actions=[robot_spawner]
+    )
+
     delayed_nodes = TimerAction(
-        period=15.0,
+        period=10.0,
         actions=[
             px4_py_gui,
             px4_test,
-            robot_spawner,
+            delayed_robot_spawner,
         ]
     )
 

@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'camera_position_controller = uav_nav.camera_position_controller:main',
             'camera_click_to_pose = uav_nav.camera_click_to_pose:main',
+            'real_camera_driver = uav_nav.real_camera_driver:main',
         ],
     },
 )

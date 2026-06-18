@@ -63,7 +63,7 @@ echo "[INFO] Spawning model: $MODEL at x=$SPAWN_X y=$SPAWN_Y z=$SPAWN_Z"
 gz model --verbose \
   --spawn-file $MODEL_PATH/$MODEL/$MODEL.sdf \
   --model-name $MODEL \
-  -x $SPAWN_X -y $SPAWN_Y -z $SPAWN_Z
+  -x $SPAWN_X -y $SPAWN_Y -z $SPAWN_Z -Y 1.57
 echo
 echo
 

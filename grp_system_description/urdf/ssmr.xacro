@@ -4,8 +4,14 @@
 
     <xacro:include filename="common_properties.xacro"/>
     <xacro:include filename="ssmr_base.xacro"/>
-    <xacro:include filename="ssmr_gazebo_ros2_conrtol.xacro"/>
-    <xacro:include filename="imu_sim.xacro"/>
+
+    <xacro:if value="$(arg real_sys)">
+        <xacro:include filename="ssmr_real_ros2_conrtol.xacro"/>
+    </xacro:if>
+    <xacro:unless value="$(arg real_sys)">
+        <xacro:include filename="ssmr_gazebo_ros2_conrtol.xacro"/>
+        <xacro:include filename="imu_sim.xacro"/>
+    </xacro:unless>
 
 
 </robot>

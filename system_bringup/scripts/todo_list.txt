@@ -1,0 +1,24 @@
+
+- node that takes command and send pwm to arduino
+
+- node in matlab
+- speed controller
+- get ecoder feedback
+
+step 1:
+pwm generator
+    - from matlab to arduino
+    - listen to a twist message
+
+step 2:
+read encoder
+
+step 3:
+implement the lqr
+
+step 4:
+ros2 control
+
+
+
+

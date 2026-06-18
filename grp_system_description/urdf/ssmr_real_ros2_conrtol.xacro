@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <ros2_control name="ssmr_ros2_cont" type="system">
+        <hardware>
+            <plugin>hw_interface_ssmr/SSMR_HWInterface</plugin>
+            <param name="port_name">/dev/ttyUSB0</param>
+        </hardware>
+        
+        <joint name="front_right_wheel_joint">
+            <command_interface name="pwm" />
+            <state_interface name="velocity" />
+            <state_interface name="position" />
+        </joint>
+        <joint name="front_left_wheel_joint">
+            <command_interface name="pwm" />
+            <state_interface name="velocity" />
+            <state_interface name="position" />
+        </joint>
+        
+    </ros2_control>
+
+</robot>

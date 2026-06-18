@@ -9,7 +9,7 @@ from gazebo_msgs.msg import EntityState
 from geometry_msgs.msg import Twist, Quaternion, Pose
 from std_msgs.msg import Float64MultiArray
 
-import numpy as np
+import numpy as np, math
 
 def quat_to_rot_matrix(q: Quaternion):
     x, y, z, w = q.x, q.y, q.z, q.w
@@ -32,7 +32,7 @@ class MyNode(Node):
             '/gazebo/get_entity_state'
         )
         self.timer_ = self.create_timer(
-            0.02,
+            0.01,
             self.timer_callback_
         )
         self.vel_state_pub_ = self.create_publisher(
@@ -91,6 +91,8 @@ class MyNode(Node):
         v_robot = R.T @ v_world
         # signed forward speed
         velocities.linear.x = v_robot[0] if abs(v_robot[0]) > 0.05 else 0.0
+        velocities.linear.y = v_robot[1] if abs(v_robot[1]) > 0.05 else 0.0
+        velocities.linear.z = v_robot[2] if abs(v_robot[2]) > 0.05 else 0.0
         
         velocities.angular.z = velocities.angular.z if abs(velocities.angular.z) > 0.05 else 0.0
 
@@ -109,13 +111,17 @@ class MyNode(Node):
           angular.x
         Publishes to /wheel_effort_cont/commands
         """
+        def clean_nan(val):
+            return 0.0 if math.isnan(val) else val
 
         effort_msg = Float64MultiArray()
+
+        # Your updated assignment
         effort_msg.data = [
-            msg.linear.x,
-            msg.linear.y,
-            msg.linear.z,
-            msg.angular.x
+            clean_nan(msg.linear.x),
+            clean_nan(msg.linear.y),
+            clean_nan(msg.linear.z),
+            clean_nan(msg.angular.x)
         ]
 
         self.wheel_effort_pub_.publish(effort_msg)

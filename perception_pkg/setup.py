@@ -23,6 +23,7 @@ setup(
         'vision_Nav = perception_pkg.vision_Nav:main',
         'choose_path = perception_pkg.choose_path:main',
         'vfg_navi = perception_pkg.vfg_navi:main',
+        'vfg_navi2 = perception_pkg.vfg_navi2:main',
         ],
     },
 )

@@ -38,7 +38,7 @@ class UGVVisionNavigator(Node):
         
         # --- MAP REFRESH LOGIC ---
         self.last_map_update_time = 0.0
-        self.map_refresh_interval = 5.0  # Seconds
+        self.map_refresh_interval = 20.0  # Seconds
         self.latest_base_map = None       
         self.obstacles_px_data = []
         
@@ -65,7 +65,6 @@ class UGVVisionNavigator(Node):
         
         # NOTE: Verify this is the correct topic for your UGV to move!
         self.cmd_pub = self.create_publisher(Twist, '/diff_cont/cmd_vel_unstamped', qos)
-        # self.cmd_pub = self.create_publisher(Twist, '/ugv/cmd_vel', qos)
 
         # Control Loop Timer (Runs at 10 Hz)
         self.create_timer(0.1, self.control_loop)
@@ -186,23 +185,16 @@ class UGVVisionNavigator(Node):
             safe_dist_px = self.safe_dist * (self.fx / self.Z) * scale_x
 
             for c in contours:
-                # Instead of one giant circle, sample points along the obstacle's edge
-                # We skip by 5 to save CPU, but you can lower this to 2 or 1 for higher resolution
-                for i in range(0, len(c), 5):
-                    x_px, y_px = c[i][0]
-                    
-                    u_highres = x_px / scale_x
-                    v_highres = y_px / scale_y
-                    X_obs, Y_obs = self.pixel_to_world(u_highres, v_highres)
-                    
-                    # Treat each edge point as a tiny physical obstacle (e.g., 5cm radius)
-                    r_world = 0.05 
-                    
-                    new_obstacles.append([X_obs, -Y_obs, r_world])
-                    
-                    # Store for visualization (x, y, small radius, safe radius)
-                    new_obstacles_px.append((int(x_px), int(y_px), 2, int(safe_dist_px)))
-                    
+                (x_px, y_px), radius_px = cv2.minEnclosingCircle(c)
+                
+                u_highres = x_px / scale_x
+                v_highres = y_px / scale_y
+                X_obs, Y_obs = self.pixel_to_world(u_highres, v_highres)
+                r_world = (radius_px / scale_x) * self.Z / self.fx
+                
+                new_obstacles.append([X_obs, -Y_obs, r_world])
+                new_obstacles_px.append((int(x_px), int(y_px), int(radius_px), int(safe_dist_px)))
+                
             self.obstacles_world = new_obstacles
             self.obstacles_px_data = new_obstacles_px
             
@@ -217,10 +209,10 @@ class UGVVisionNavigator(Node):
             cv2.circle(viz_map, (start_node[1], start_node[0]), 5, (0, 255, 0), -1) 
             cv2.circle(viz_map, (goal_node[1], goal_node[0]), 5, (0, 0, 255), -1)
             
-            # Obstacles (Draw as a dotted boundary line instead of giant circles)
+            # Obstacles
             for (ox, oy, r, r_safe) in self.obstacles_px_data:
-                # Draw the physical edge point
-                cv2.circle(viz_map, (ox, oy), 2, (0, 0, 255), -1) 
+                cv2.circle(viz_map, (ox, oy), r + r_safe, (0, 255, 255), 1) # Yellow safe boundary
+                cv2.circle(viz_map, (ox, oy), r, (0, 0, 255), 2)            # Red physical boundary
 
             cv2.imshow("Neural Nav Map", viz_map)
             cv2.waitKey(1)
@@ -252,97 +244,68 @@ class UGVVisionNavigator(Node):
             self.fixed_path_start = None 
             return
 
-        # AI, WRITE HERE
+        # 1. VFG (Attractive Force)
+        dx = x2 - x1
+        dy = y2 - y1
+        chi_p = math.atan2(dy, dx)
+        
+        error_cross = (xr - x1)*math.sin(chi_p) - (yr - y1)*math.cos(chi_p)
+        chi_err = math.atan(self.k_vfg * error_cross)
+        psi_vfg = chi_p - chi_err
+        
+        v_vfg_x = self.v_max * math.cos(psi_vfg)
+        v_vfg_y = self.v_max * math.sin(psi_vfg)
 
-        # ==========================================
-        #   STEP 1: VFG — Virtual Guide Line
-        # ==========================================
-        # Line vector from fixed start → goal
-        dx_line = x2 - x1
-        dy_line = y2 - y1
-        line_len = math.sqrt(dx_line**2 + dy_line**2)
+        # 2. APF (Repulsive Force)
+        f_apf_x, f_apf_y = 0.0, 0.0
+        
+        for obs in self.obstacles_world:
+            ox, oy, r_obs = obs
+            dist = math.sqrt((xr - ox)**2 + (yr - oy)**2)
+            
+            # max() prevents divide-by-zero if robot touches exact edge
+            dist_surface = max(dist - r_obs, 0.01) 
+            
+            if dist_surface < self.safe_dist:
+                mag = self.k_apf * (1.0/dist_surface - 1.0/self.safe_dist) * (1.0/(dist_surface**2))
+                
+                vec_x = xr - ox
+                vec_y = yr - oy
+                vec_len = max(math.sqrt(vec_x**2 + vec_y**2), 0.01)
+                
+                f_apf_x += (vec_x/vec_len) * mag
+                f_apf_y += (vec_y/vec_len) * mag
 
-        if line_len < 1e-6:
-            self.stop_robot()
-            return
+        # 3. Combine Vectors
+# Invert the total vector direction before calculating desired_yaw
+        total_x = v_vfg_x + f_apf_x
+        total_y = v_vfg_y + f_apf_y
 
-        # Angle of the guide line (desired travel direction when on the line)
-        phi_line = math.atan2(dy_line, dx_line)
-
-        # Left-pointing normal of the line: en = (-sin φ, cos φ)
-        en_x = -math.sin(phi_line)
-        en_y =  math.cos(phi_line)
-
-        # Signed cross-track error — positive = robot is LEFT of the line
-        e_ct = (xr - x1) * en_x + (yr - y1) * en_y
-
-        # VFG bends the desired heading toward the line.
-        # When e_ct → 0  : phi_vfg → phi_line (follow the line)
-        # When e_ct >> 0 : phi_vfg tilts right to converge back
-        phi_vfg = phi_line - math.atan(self.k_vfg * e_ct)
-
-        vfg_x = math.cos(phi_vfg)
-        vfg_y = math.sin(phi_vfg)
-
-        # ==========================================
-        #   STEP 2: APF — Obstacle Repulsion
-        # ==========================================
-        rep_x, rep_y = 0.0, 0.0
-
-        for (ox, oy, _r) in self.obstacles_world:
-            dx_o = xr - ox
-            dy_o = yr - oy
-            d = math.sqrt(dx_o**2 + dy_o**2)
-            if d < 1e-6:
-                d = 1e-6           # Avoid division by zero if robot is ON a point
-            if d < self.safe_dist:
-                # Classic APF: magnitude grows as robot gets closer
-                # F = k * (1/d - 1/d0) / d²  →  direction: away from obstacle
-                mag = self.k_apf * (1.0/d - 1.0/self.safe_dist) / (d**2)
-                rep_x += mag * (dx_o / d)
-                rep_y += mag * (dy_o / d)
-
-        # Cap total repulsion — the contour is sampled as ~hundreds of points,
-        # so the raw sum can explode near obstacles. This keeps it stable.
-        rep_norm = math.sqrt(rep_x**2 + rep_y**2)
-        rep_limit = 3.0  # Tune: higher → stronger avoidance
-        if rep_norm > rep_limit:
-            rep_x = rep_x / rep_norm * rep_limit
-            rep_y = rep_y / rep_norm * rep_limit
-
-        # ==========================================
-        #   STEP 3: Resultant → Desired Heading
-        # ==========================================
-        total_x = vfg_x # + rep_x
-        total_y = vfg_y # + rep_y
-
+        # 4. Kinematics Output
         desired_yaw = math.atan2(total_y, total_x)
+        
+        v_cmd = self.v_max
 
-        # ==========================================
-        #   STEP 4: Velocity Commands
-        # ==========================================
-        # Heading error, safely wrapped to [-π, π]
-        yaw_error = math.atan2(math.sin(desired_yaw - theta),
-                               math.cos(desired_yaw - theta))
+        # Yaw error normalized [-pi, pi]
+        yaw_err = desired_yaw - theta
+        while yaw_err > math.pi: yaw_err -= 2*math.pi
+        while yaw_err < -math.pi: yaw_err += 2*math.pi
 
-        # Angular velocity — proportional to heading error
-        omega = self.k_omega * yaw_error
-        omega = max(-1.5, min(1.5, omega))          # Hard clamp (rad/s)
-
-        # Linear velocity — cosine coupling:
-        # Full speed when aligned, slows/stops when turning sharply
-        v_cmd = self.v_max # * max(0.0, math.cos(yaw_error))
-
+        # Create and Publish Twist
         cmd = Twist()
-        cmd.linear.x = v_cmd
-        cmd.angular.z = omega
+        speed_scaling = max(0.0, math.cos(yaw_err))
+        safe_v_cmd = v_cmd * speed_scaling # scale the speed down if looking at a different direction
+        # cmd.linear.x = float(safe_v_cmd)
+        # cmd.angular.z = float(self.k_omega * yaw_err)
         
         self.cmd_pub.publish(cmd)
         
         # Debug Print to prove loop is running
         self.get_logger().info(f"CMD -> v: {v_cmd:.2f}, w: {cmd.angular.z:.2f} | Dist: {dist_to_goal:.1f}m\n"
                                + 
-                               f"\nrobot yaw: {self.robot_yaw:.3f}, \ndes yaw: {desired_yaw:.3f}", throttle_duration_sec=0.5)
+                               f"\nrobot yaw: {self.robot_yaw:.3f}, \ndes yaw: {desired_yaw:.3f}"
+                               +
+                               f"\nerror_cross: {error_cross:.3f}", throttle_duration_sec=0.5)
 
     def stop_robot(self):
         cmd = Twist()
